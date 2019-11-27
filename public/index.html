@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Assignment 8</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+    <style>
+        body {
+            text-align: center;
+        }
+
+        form {
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Assignment 8 </h1>
+    <form>
+
+        <table>
+            <tr>
+                <td><label for="objectID">Object ID :</label></td>
+                <td><input name="objectID" id="objectID" type="text" class=""></td>
+            </tr>
+
+            <tr>
+                <td><label for="email">Email :</label></td>
+                <td><input name="email" id="email" type="text" class="" onKeyUp="validate();"></td>
+                <td><span id="email-error">Email is Invalid</span></td>
+            </tr>
+
+            <tr>
+                <td><label>Password:</label></td>
+                <td><input type="password" name="password" id="password" class="demoInputBox" onKeyUp="validate();" />
+                </td>
+                <td><span id="password-strength-status"></span></td>
+            </tr>
+
+            <tr>
+                <td><input type="submit" class="" id="submit" value="Submit" disabled="disabled" /></td>
+                <td><input type="submit" class="" id="updateBtn" value="Update" /></td>
+            </tr>
+
+        </table>
+    </form>
+    <h1>Show All Data</h1>
+    <div id="text"></div>
+
+    <h1>Deleting the Data</h1>
+    <div>
+        <label>Password:</label>
+        <input type="password" name="password" id="delete" class="demoInputBox" />
+        <input type="submit" class="" id="deleteBtn" value="Delete" />
+    </div>
+
+    <script type="text/javascript">
+        populateText();
+        $('#email-error').hide();
+        function validate() {
+
+            var valid = true;
+            valid = checkEmail();
+            valid = valid && checkPasswordStrength();
+
+            $("#submit").attr("disabled", true);
+            if (valid) {
+                $("#submit").attr("disabled", false);
+            }
+        }
+        function checkEmail() {
+            var email = $('#email').val();
+            var regex = /^([a-zA-Z0-9_\.\-\+])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+            console.log(email);
+            if (!regex.test(email)) {
+                $('#email-error').show();
+                return false;
+            } else {
+                $('#email-error').hide();
+                return true;
+            }
+        }
+
+        function checkPasswordStrength() {
+            var number = /([0-9])/;
+            var alphabets = /([a-zA-Z])/;
+            var special_characters = /([~,!,@,#,$,%,^,&,*,-,_,+,=,?,>,<])/;
+            if ($('#password').val().length < 6) {
+                $('#password-strength-status').removeClass();
+                $('#password-strength-status').addClass('weak-password');
+                $('#password-strength-status').html("Weak (should be atleast 6 characters.)");
+                return false;
+            } else {
+                if ($('#password').val().match(number) && $('#password').val().match(alphabets) && $('#password').val().match(special_characters)) {
+                    $('#password-strength-status').removeClass();
+                    $('#password-strength-status').addClass('strong-password');
+                    $('#password-strength-status').html("Strong");
+                    return true;
+                } else {
+                    $('#password-strength-status').removeClass();
+                    $('#password-strength-status').addClass('medium-password');
+                    $('#password-strength-status').html("Medium (should include alphabets, numbers and special characters.)");
+                    return false;
+                }
+            }
+        }
+        $('#submit').click(function (e) {
+            e.preventDefault();
+            var email = document.getElementById("email").value;
+            var password = document.getElementById("password").value;
+            var data = {};
+            data.email = email;
+            data.password = password;
+
+            $.ajax({
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                url: 'http://localhost:3000/user/create',
+                success: function (result) {
+                    console.log('success');
+                    populateText();
+                }
+            });
+        });
+
+        function populateText() {
+            $("#text").html('');
+            $.get('http://localhost:3000/user/getAll', function (data) {
+                $.each(data, function (i, item) {
+                    console.log(item.email);
+                    // console.log(data.message[0].password);
+                    var newdiv = $("<div id='" + item._id + "'><span></span>ID - " + item._id + "<span> | Email - " + item.email + "</span> | <span> Password -" + item.password + "</span></div><br>");
+                    $("#text").append(newdiv);
+                });
+            });
+        }
+
+        $('#deleteBtn').click(function (e) {
+            var password = document.getElementById("delete").value;
+            console.log(password);
+            var data = {};
+            data.password = password;
+            $.ajax({
+                type: 'DELETE',
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                url: 'http://localhost:3000/user/delete/',
+                success: function (result) {
+                    console.log('success');
+                    populateText();
+                }
+            });
+        });
+
+        $('#updateBtn').click(function (e) {
+            e.preventDefault();
+            var id = document.getElementById("objectID").value;
+            var email = document.getElementById("email").value;
+            var password = document.getElementById("password").value;
+            console.log(id);
+            console.log(email);
+            console.log(password);
+            var data = {};
+            data.email = email;
+            data.password = password;
+            $.ajax({
+                type: 'PUT',
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                url: 'http://localhost:3000/user/update/' + id,
+                success: function (result) {
+                    console.log('success');
+                    populateText();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
